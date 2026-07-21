@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0b1324" />
+  <title>لوحة متابعة التحصيل | بو مساعد</title>
+  <style>
+    :root{
+      --bg:#07111f;
+      --bg2:#0d1a2d;
+      --panel:rgba(17,30,51,.78);
+      --panel-solid:#111e33;
+      --panel-soft:rgba(255,255,255,.055);
+      --text:#eef6ff;
+      --muted:#9fb0c5;
+      --line:rgba(255,255,255,.10);
+      --primary:#4fd1c5;
+      --primary2:#2dd4bf;
+      --blue:#60a5fa;
+      --green:#34d399;
+      --yellow:#fbbf24;
+      --orange:#fb923c;
+      --red:#fb7185;
+      --purple:#a78bfa;
+      --shadow:0 22px 65px rgba(0,0,0,.28);
+      --radius:22px;
+    }
+
+    body.light{
+      --bg:#eef4f8;
+      --bg2:#f8fbfd;
+      --panel:rgba(255,255,255,.86);
+      --panel-solid:#ffffff;
+      --panel-soft:rgba(15,23,42,.045);
+      --text:#0f1f33;
+      --muted:#64748b;
+      --line:rgba(15,23,42,.10);
+      --shadow:0 18px 48px rgba(15,23,42,.10);
+    }
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      min-height:100vh;
+      font-family:Tahoma, Arial, "Segoe UI", sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at 8% 8%, rgba(45,212,191,.14), transparent 25%),
+        radial-gradient(circle at 92% 0%, rgba(96,165,250,.13), transparent 30%),
+        linear-gradient(145deg,var(--bg),var(--bg2));
+      transition:background .3s,color .3s;
+    }
+
+    button,input,select{font:inherit}
+
+    .splash{
+      position:fixed; inset:0; z-index:9999;
+      display:grid; place-items:center;
+      background:
+        radial-gradient(circle at center, rgba(45,212,191,.12), transparent 35%),
+        #07111f;
+      transition:opacity .65s ease, visibility .65s ease;
+    }
+    .splash.hide{opacity:0;visibility:hidden}
+    .splash-card{text-align:center;padding:42px}
+    .splash-logo{
+      width:86px;height:86px;border-radius:28px;margin:0 auto 22px;
+      display:grid;place-items:center;font-size:38px;
+      background:linear-gradient(135deg,#2dd4bf,#60a5fa);
+      box-shadow:0 20px 55px rgba(45,212,191,.25);
+      animation:float 2s ease-in-out infinite;
+    }
+    .splash h1{margin:0;font-size:clamp(25px,5vw,44px)}
+    .splash p{color:#a9bbcd;margin:13px 0 0}
+    .splash small{display:block;color:#6f879c;margin-top:18px;letter-spacing:.3px}
+    .loader{
+      width:190px;height:4px;background:rgba(255,255,255,.1);
+      border-radius:999px;margin:26px auto 0;overflow:hidden
+    }
+    .loader span{display:block;height:100%;width:45%;background:linear-gradient(90deg,#2dd4bf,#60a5fa);animation:load 1.4s infinite}
+    @keyframes load{from{transform:translateX(150%)}to{transform:translateX(-250%)}}
+    @keyframes float{50%{transform:translateY(-7px)}}
+
+    .app{max-width:1500px;margin:auto;padding:26px}
+    .topbar{
+      display:grid;grid-template-columns:1.3fr .85fr;gap:18px;align-items:stretch;
+      margin-bottom:18px;
+    }
+    .hero,.clock-card,.card,.table-card,.chart-card{
+      background:var(--panel);
+      border:1px solid var(--line);
+      box-shadow:var(--shadow);
+      backdrop-filter:blur(18px);
+      -webkit-backdrop-filter:blur(18px);
+    }
+    .hero{
+      border-radius:var(--radius);padding:28px;position:relative;overflow:hidden;
+      min-height:185px;
+    }
+    .hero:before{
+      content:"";position:absolute;width:250px;height:250px;border-radius:50%;
+      left:-70px;top:-90px;background:rgba(45,212,191,.12);filter:blur(8px)
+    }
+    .brand{display:flex;gap:14px;align-items:center;position:relative}
+    .logo{
+      width:56px;height:56px;border-radius:18px;display:grid;place-items:center;
+      background:linear-gradient(135deg,var(--primary2),var(--blue));
+      color:#04232c;font-size:27px;font-weight:900;
+      box-shadow:0 15px 35px rgba(45,212,191,.22);
+    }
+    .brand h1{font-size:clamp(22px,3vw,34px);margin:0 0 4px}
+    .brand p{margin:0;color:var(--muted)}
+    .hero-message{
+      position:relative;margin-top:24px;padding:15px 17px;border:1px solid var(--line);
+      background:var(--panel-soft);border-radius:16px;color:var(--muted);line-height:1.8
+    }
+    .hero-message strong{color:var(--text)}
+    .hero-actions{position:absolute;left:22px;top:22px;display:flex;gap:9px}
+    .icon-btn{
+      border:1px solid var(--line);background:var(--panel-soft);color:var(--text);
+      width:42px;height:42px;border-radius:14px;cursor:pointer;transition:.2s;
+    }
+    .icon-btn:hover{transform:translateY(-2px);border-color:rgba(45,212,191,.45)}
+    .clock-card{
+      border-radius:var(--radius);padding:24px;display:flex;flex-direction:column;
+      justify-content:center;align-items:center;text-align:center;position:relative;overflow:hidden;
+    }
+    .clock-card:after{
+      content:"";position:absolute;width:180px;height:180px;border-radius:50%;
+      right:-70px;bottom:-100px;background:rgba(96,165,250,.13)
+    }
+    .day{font-size:17px;color:var(--primary);font-weight:700}
+    .date{color:var(--muted);margin-top:7px}
+    .time{
+      direction:ltr;font-size:clamp(36px,6vw,61px);font-weight:900;letter-spacing:2px;
+      margin:12px 0 4px;font-variant-numeric:tabular-nums
+    }
+    .timezone{font-size:12px;color:var(--muted)}
+
+    .stats{
+      display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:18px
+    }
+    .stat{
+      border-radius:19px;padding:19px;position:relative;overflow:hidden;
+      min-height:126px;
+    }
+    .stat .label{color:var(--muted);font-size:14px}
+    .stat .value{font-size:31px;font-weight:900;margin-top:12px}
+    .stat .sub{font-size:12px;color:var(--muted);margin-top:5px}
+    .stat .bubble{
+      position:absolute;left:15px;top:15px;width:45px;height:45px;border-radius:15px;
+      display:grid;place-items:center;font-size:21px;background:var(--panel-soft)
+    }
+    .stat:after{
+      content:"";position:absolute;inset:auto 0 0 0;height:3px;background:var(--accent)
+    }
+
+    .workspace{
+      display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:18px;align-items:start
+    }
+    .table-card{border-radius:var(--radius);overflow:hidden}
+    .toolbar{
+      padding:18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+      border-bottom:1px solid var(--line)
+    }
+    .search{
+      flex:1;min-width:230px;display:flex;align-items:center;gap:10px;
+      background:var(--panel-soft);border:1px solid var(--line);border-radius:15px;padding:0 14px
+    }
+    .search input{width:100%;padding:13px 0;border:0;outline:0;background:transparent;color:var(--text)}
+    .filter-select{
+      background:var(--panel-soft);border:1px solid var(--line);color:var(--text);
+      border-radius:14px;padding:12px 14px;outline:0;min-width:135px
+    }
+    .filter-select option{color:#111827}
+    .status-tabs{display:flex;gap:8px;flex-wrap:wrap;padding:0 18px 18px}
+    .tab{
+      border:1px solid var(--line);background:transparent;color:var(--muted);
+      border-radius:999px;padding:9px 13px;cursor:pointer;transition:.2s
+    }
+    .tab:hover,.tab.active{background:rgba(45,212,191,.12);color:var(--text);border-color:rgba(45,212,191,.38)}
+    .table-wrap{overflow:auto;max-height:640px}
+    table{width:100%;border-collapse:collapse;min-width:850px}
+    th,td{text-align:right;padding:15px 17px;border-bottom:1px solid var(--line)}
+    th{position:sticky;top:0;z-index:2;background:var(--panel-solid);font-size:13px;color:var(--muted)}
+    tbody tr{cursor:pointer;transition:.18s}
+    tbody tr:hover{background:var(--panel-soft)}
+    .client-cell{display:flex;align-items:center;gap:11px}
+    .avatar{
+      width:39px;height:39px;border-radius:13px;display:grid;place-items:center;
+      font-weight:900;background:linear-gradient(135deg,rgba(45,212,191,.23),rgba(96,165,250,.2));
+      border:1px solid var(--line)
+    }
+    .client-name{font-weight:800}
+    .client-type{font-size:11px;color:var(--muted);margin-top:3px}
+    .money{font-weight:800;font-variant-numeric:tabular-nums}
+    .badge{
+      display:inline-flex;align-items:center;gap:7px;border-radius:999px;padding:7px 10px;
+      font-size:12px;font-weight:800;white-space:nowrap
+    }
+    .dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+    .overdue{background:rgba(251,113,133,.12);color:var(--red)}
+    .today{background:rgba(251,146,60,.12);color:var(--orange)}
+    .soon{background:rgba(251,191,36,.12);color:var(--yellow)}
+    .safe{background:rgba(52,211,153,.12);color:var(--green)}
+    .empty{padding:60px 20px;text-align:center;color:var(--muted);display:none}
+
+    .side{display:grid;gap:18px}
+    .chart-card{border-radius:var(--radius);padding:19px}
+    .section-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:15px}
+    .section-title h3{margin:0;font-size:17px}
+    .section-title small{color:var(--muted)}
+    canvas{display:block;width:100%;height:230px}
+    .priority-list{display:grid;gap:10px}
+    .priority-item{
+      display:grid;grid-template-columns:38px 1fr auto;gap:10px;align-items:center;
+      padding:11px;border-radius:14px;background:var(--panel-soft);border:1px solid var(--line);
+      cursor:pointer;transition:.2s
+    }
+    .priority-item:hover{transform:translateX(-3px);border-color:rgba(45,212,191,.35)}
+    .rank{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:rgba(45,212,191,.12);font-weight:900}
+    .priority-item b{font-size:13px}
+    .priority-item span{display:block;font-size:11px;color:var(--muted);margin-top:3px}
+    .countdown{font-size:11px;font-weight:800}
+
+    .footer{
+      text-align:center;color:var(--muted);padding:28px 10px 8px;font-size:13px
+    }
+    .footer strong{
+      color:var(--text);display:inline-block;padding:8px 12px;border:1px solid var(--line);
+      border-radius:999px;background:var(--panel-soft)
+    }
+
+    .modal{
+      position:fixed;inset:0;z-index:500;display:grid;place-items:center;padding:18px;
+      background:rgba(2,8,23,.72);opacity:0;visibility:hidden;transition:.25s
+    }
+    .modal.show{opacity:1;visibility:visible}
+    .modal-card{
+      width:min(560px,100%);background:var(--panel-solid);border:1px solid var(--line);
+      border-radius:25px;box-shadow:0 28px 90px rgba(0,0,0,.35);padding:23px;
+      transform:translateY(18px) scale(.98);transition:.25s
+    }
+    .modal.show .modal-card{transform:none}
+    .modal-head{display:flex;align-items:center;justify-content:space-between;gap:15px}
+    .modal-title{display:flex;gap:12px;align-items:center}
+    .modal-title h2{margin:0;font-size:22px}
+    .modal-title p{margin:5px 0 0;color:var(--muted);font-size:13px}
+    .close{border:0;background:var(--panel-soft);color:var(--text);width:40px;height:40px;border-radius:13px;cursor:pointer}
+    .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-top:20px}
+    .detail{
+      padding:14px;border-radius:15px;background:var(--panel-soft);border:1px solid var(--line)
+    }
+    .detail label{display:block;color:var(--muted);font-size:11px;margin-bottom:7px}
+    .detail strong{font-size:14px}
+    .note{
+      margin-top:11px;padding:15px;border-radius:15px;background:var(--panel-soft);
+      border:1px solid var(--line);line-height:1.8;color:var(--muted)
+    }
+    .modal-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+    .action{
+      text-decoration:none;text-align:center;padding:13px;border-radius:14px;font-weight:800;
+      border:1px solid var(--line);color:var(--text);background:var(--panel-soft)
+    }
+    .action.primary{background:linear-gradient(135deg,var(--primary2),var(--blue));color:#05202b;border:0}
+
+    .toast{
+      position:fixed;left:24px;bottom:24px;z-index:800;background:var(--panel-solid);
+      border:1px solid var(--line);color:var(--text);padding:14px 17px;border-radius:15px;
+      box-shadow:var(--shadow);transform:translateY(30px);opacity:0;transition:.25s
+    }
+    .toast.show{transform:none;opacity:1}
+
+    @media (max-width:1150px){
+      .stats{grid-template-columns:repeat(3,1fr)}
+      .workspace{grid-template-columns:1fr}
+      .side{grid-template-columns:1fr 1fr}
+    }
+    @media (max-width:760px){
+      .app{padding:13px}
+      .topbar{grid-template-columns:1fr}
+      .hero{padding:22px}
+      .hero-actions{position:static;margin-top:18px}
+      .stats{grid-template-columns:1fr 1fr}
+      .workspace{display:block}
+      .side{grid-template-columns:1fr;margin-top:16px}
+      .detail-grid{grid-template-columns:1fr}
+      .modal-actions{grid-template-columns:1fr}
+      .toolbar{align-items:stretch}
+      .filter-select{flex:1}
+    }
+    @media (max-width:470px){
+      .stats{grid-template-columns:1fr}
+      .clock-card{padding:20px}
+      .time{font-size:42px}
+    }
+  </style>
+</head>
+<body>
+  <div class="splash" id="splash">
+    <div class="splash-card">
+      <div class="splash-logo">﷼</div>
+      <h1>لوحة متابعة التحصيل</h1>
+      <p>نسخة تجريبية تفاعلية احترافية</p>
+      <small>Designed by بو مساعد</small>
+      <div class="loader"><span></span></div>
+    </div>
+  </div>
+
+  <main class="app">
+    <section class="topbar">
+      <div class="hero">
+        <div class="brand">
+          <div class="logo">﷼</div>
+          <div>
+            <h1>لوحة متابعة التحصيل</h1>
+            <p>مركز موحد لمتابعة العملاء ومواعيد الاستحقاق</p>
+          </div>
+        </div>
+        <div class="hero-actions">
+          <button class="icon-btn" id="themeBtn" title="تغيير المظهر">☀️</button>
+          <button class="icon-btn" id="refreshBtn" title="تحديث البيانات">↻</button>
+        </div>
+        <div class="hero-message" id="heroMessage"></div>
+      </div>
+
+      <div class="clock-card">
+        <div class="day" id="dayName">—</div>
+        <div class="date" id="fullDate">—</div>
+        <div class="time" id="liveTime">00:00:00</div>
+        <div class="timezone">توقيت المملكة العربية السعودية</div>
+      </div>
+    </section>
+
+    <section class="stats" id="stats"></section>
+
+    <section class="workspace">
+      <div class="table-card">
+        <div class="toolbar">
+          <div class="search">
+            <span>⌕</span>
+            <input id="searchInput" type="search" placeholder="ابحث باسم العميل أو المنطقة أو رقم الجوال..." />
+          </div>
+          <select id="regionFilter" class="filter-select">
+            <option value="all">كل المناطق</option>
+          </select>
+          <select id="sortFilter" class="filter-select">
+            <option value="priority">الأولوية</option>
+            <option value="amount-desc">الأعلى قيمة</option>
+            <option value="amount-asc">الأقل قيمة</option>
+            <option value="name">اسم العميل</option>
+          </select>
+        </div>
+
+        <div class="status-tabs">
+          <button class="tab active" data-status="all">الكل</button>
+          <button class="tab" data-status="overdue">متأخر</button>
+          <button class="tab" data-status="today">اليوم</button>
+          <button class="tab" data-status="soon">خلال أسبوع</button>
+          <button class="tab" data-status="safe">لاحقًا</button>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>العميل</th>
+                <th>المنطقة</th>
+                <th>قيمة التحصيل</th>
+                <th>تاريخ التحصيل</th>
+                <th>الفترة المتبقية</th>
+                <th>الحالة</th>
+              </tr>
+            </thead>
+            <tbody id="clientsBody"></tbody>
+          </table>
+          <div class="empty" id="emptyState">لا توجد نتائج مطابقة للفلاتر الحالية.</div>
+        </div>
+      </div>
+
+      <aside class="side">
+        <div class="chart-card">
+          <div class="section-title">
+            <h3>توزيع العملاء حسب المنطقة</h3>
+            <small>بيانات تجريبية</small>
+          </div>
+          <canvas id="regionChart" width="320" height="230"></canvas>
+        </div>
+
+        <div class="chart-card">
+          <div class="section-title">
+            <h3>أولويات المتابعة</h3>
+            <small>تُرتّب تلقائيًا</small>
+          </div>
+          <div class="priority-list" id="priorityList"></div>
+        </div>
+      </aside>
+    </section>
+
+    <footer class="footer">
+      <strong>تم تصميم هذا الويب الاحترافي عن طريق المصمم العالمي بو مساعد</strong>
+      <div style="margin-top:12px">نسخة استعراضية مبدئية لشرح فكرة النظام</div>
+    </footer>
+  </main>
+
+  <div class="modal" id="clientModal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div class="modal-title">
+          <div class="avatar" id="modalAvatar">ش</div>
+          <div>
+            <h2 id="modalName">اسم العميل</h2>
+            <p id="modalType">نوع العميل</p>
+          </div>
+        </div>
+        <button class="close" id="closeModal">✕</button>
+      </div>
+
+      <div class="detail-grid">
+        <div class="detail"><label>المنطقة</label><strong id="modalRegion"></strong></div>
+        <div class="detail"><label>رقم الجوال</label><strong id="modalPhone"></strong></div>
+        <div class="detail"><label>قيمة التحصيل</label><strong id="modalAmount"></strong></div>
+        <div class="detail"><label>تاريخ التحصيل</label><strong id="modalDue"></strong></div>
+        <div class="detail"><label>الفترة المتبقية</label><strong id="modalRemaining"></strong></div>
+        <div class="detail"><label>آخر متابعة</label><strong id="modalLastContact"></strong></div>
+      </div>
+      <div class="note" id="modalNote"></div>
+      <div class="modal-actions">
+        <a class="action primary" id="callLink" href="#">☎ اتصال بالعميل</a>
+        <a class="action" id="waLink" href="#" target="_blank">واتساب</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">تم تحديث لوحة التحكم</div>
+
+  <script>
+    const DAY = 86400000;
+
+    const clients = [
+      {id:1,name:"شركة الخليج للتجارة",type:"شركة",region:"الدمام",amount:18500,dueOffset:-4,phone:"0501234567",note:"تم التواصل مع المحاسب، ووعد بتحويل المبلغ خلال يومي عمل.",lastContact:"قبل يوم"},
+      {id:2,name:"مؤسسة النور للمقاولات",type:"مؤسسة",region:"الخبر",amount:9200,dueOffset:0,phone:"0532345678",note:"يفضّل التواصل بعد الساعة الواحدة ظهرًا.",lastContact:"اليوم"},
+      {id:3,name:"شركة الرؤية الحديثة",type:"شركة",region:"الرياض",amount:24750,dueOffset:2,phone:"0553456789",note:"المستندات مكتملة والتحويل تحت الإجراء.",lastContact:"قبل يومين"},
+      {id:4,name:"مؤسسة المدار للتوريدات",type:"مؤسسة",region:"الجبيل",amount:6800,dueOffset:5,phone:"0564567890",note:"طلب العميل إعادة إرسال كشف الحساب عبر البريد.",lastContact:"قبل 3 أيام"},
+      {id:5,name:"شركة الإبداع الصناعي",type:"شركة",region:"الدمام",amount:32100,dueOffset:9,phone:"0585678901",note:"عميل منتظم، لا توجد ملاحظات عاجلة.",lastContact:"قبل أسبوع"},
+      {id:6,name:"مؤسسة الواحة التجارية",type:"مؤسسة",region:"الأحساء",amount:11300,dueOffset:-1,phone:"0596789012",note:"لم يتم الرد على آخر اتصال، يُنصح بإعادة المحاولة صباحًا.",lastContact:"أمس"},
+      {id:7,name:"شركة الأفق الذهبي",type:"شركة",region:"الخبر",amount:15750,dueOffset:1,phone:"0507890123",note:"أكد العميل أن الحوالة ستصدر من الإدارة المالية.",lastContact:"قبل ساعتين"},
+      {id:8,name:"مؤسسة المسار السريع",type:"مؤسسة",region:"الرياض",amount:7900,dueOffset:14,phone:"0538901234",note:"التحصيل مجدول ضمن الدفعة الشهرية القادمة.",lastContact:"قبل 5 أيام"},
+      {id:9,name:"شركة روافد الشرق",type:"شركة",region:"القطيف",amount:19400,dueOffset:-7,phone:"0559012345",note:"حالة متأخرة وتتطلب تصعيدًا للإدارة المالية.",lastContact:"قبل يومين"},
+      {id:10,name:"مؤسسة قمم الأعمال",type:"مؤسسة",region:"الجبيل",amount:5450,dueOffset:6,phone:"0560123456",note:"طلب العميل الزيارة الميدانية قبل التحصيل.",lastContact:"قبل 4 أيام"},
+      {id:11,name:"شركة المسار المتقدم",type:"شركة",region:"الدمام",amount:28600,dueOffset:3,phone:"0581234098",note:"الشيك جاهز للاستلام من مقر الشركة.",lastContact:"اليوم"},
+      {id:12,name:"مؤسسة بناء المستقبل",type:"مؤسسة",region:"الأحساء",amount:8600,dueOffset:21,phone:"0592340987",note:"موعد التحصيل بعيد ولا يتطلب إجراء حاليًا.",lastContact:"قبل أسبوعين"}
+    ];
+
+    const state = {status:"all",region:"all",sort:"priority",search:""};
+    const body = document.getElementById("clientsBody");
+    const empty = document.getElementById("emptyState");
+
+    function startOfToday(){
+      const d = new Date();
+      return new Date(d.getFullYear(),d.getMonth(),d.getDate());
+    }
+
+    function clientDueDate(client){
+      return new Date(startOfToday().getTime() + client.dueOffset * DAY);
+    }
+
+    function statusOf(client){
+      if(client.dueOffset < 0) return "overdue";
+      if(client.dueOffset === 0) return "today";
+      if(client.dueOffset <= 7) return "soon";
+      return "safe";
+    }
+
+    function statusText(status){
+      return {
+        overdue:"متأخر",
+        today:"مستحق اليوم",
+        soon:"خلال أسبوع",
+        safe:"ضمن المدة"
+      }[status];
+    }
+
+    function remainingText(offset){
+      if(offset < 0) return `متأخر ${Math.abs(offset)} ${Math.abs(offset)===1 ? "يوم" : "أيام"}`;
+      if(offset === 0) return "اليوم";
+      if(offset === 1) return "غدًا";
+      return `باقي ${offset} أيام`;
+    }
+
+    function formatMoney(n){
+      return new Intl.NumberFormat("ar-SA").format(n) + " ر.س";
+    }
+
+    function formatDate(d){
+      return new Intl.DateTimeFormat("ar-SA",{
+        day:"numeric",month:"short",year:"numeric"
+      }).format(d);
+    }
+
+    function updateClock(){
+      const now = new Date();
+      document.getElementById("dayName").textContent =
+        new Intl.DateTimeFormat("ar-SA",{weekday:"long"}).format(now);
+      document.getElementById("fullDate").textContent =
+        new Intl.DateTimeFormat("ar-SA",{day:"numeric",month:"long",year:"numeric"}).format(now);
+      document.getElementById("liveTime").textContent =
+        now.toLocaleTimeString("en-GB",{hour12:false});
+    }
+
+    function renderStats(){
+      const total = clients.length;
+      const today = clients.filter(c=>c.dueOffset===0).length;
+      const overdue = clients.filter(c=>c.dueOffset<0).length;
+      const week = clients.filter(c=>c.dueOffset>0 && c.dueOffset<=7).length;
+      const amount = clients.reduce((s,c)=>s+c.amount,0);
+
+      const stats = [
+        {label:"إجمالي العملاء",value:total,sub:"عميل مسجل",icon:"👥",accent:"var(--blue)"},
+        {label:"مستحق اليوم",value:today,sub:"يتطلب متابعة اليوم",icon:"⏰",accent:"var(--orange)"},
+        {label:"العملاء المتأخرون",value:overdue,sub:"بحاجة إلى إجراء عاجل",icon:"⚠️",accent:"var(--red)"},
+        {label:"خلال 7 أيام",value:week,sub:"استحقاقات قريبة",icon:"📅",accent:"var(--yellow)"},
+        {label:"إجمالي المستحقات",value:formatMoney(amount),sub:"قيمة تجريبية",icon:"﷼",accent:"var(--green)"}
+      ];
+
+      document.getElementById("stats").innerHTML = stats.map(s=>`
+        <div class="stat card" style="--accent:${s.accent}">
+          <div class="label">${s.label}</div>
+          <div class="value">${s.value}</div>
+          <div class="sub">${s.sub}</div>
+          <div class="bubble">${s.icon}</div>
+        </div>
+      `).join("");
+
+      const greetingHour = new Date().getHours();
+      const greeting = greetingHour < 12 ? "صباح الخير" : greetingHour < 18 ? "مساء الخير" : "مساء الخير";
+      document.getElementById("heroMessage").innerHTML =
+        `<strong>${greeting} 👋</strong> لديك اليوم <strong>${today}</strong> عملية تحصيل، و<strong>${overdue}</strong> عملاء متأخرون. تم ترتيب الأولويات تلقائيًا لتبدأ بالأهم.`;
+    }
+
+    function setupRegions(){
+      const regions = [...new Set(clients.map(c=>c.region))].sort();
+      const select = document.getElementById("regionFilter");
+      select.innerHTML = `<option value="all">كل المناطق</option>` +
+        regions.map(r=>`<option value="${r}">${r}</option>`).join("");
+    }
+
+    function filteredClients(){
+      let list = clients.filter(c=>{
+        const status = statusOf(c);
+        const q = state.search.trim().toLowerCase();
+        const matchSearch = !q || [c.name,c.region,c.phone,c.type].some(v=>String(v).toLowerCase().includes(q));
+        const matchStatus = state.status==="all" || status===state.status;
+        const matchRegion = state.region==="all" || c.region===state.region;
+        return matchSearch && matchStatus && matchRegion;
+      });
+
+      if(state.sort==="priority") list.sort((a,b)=>a.dueOffset-b.dueOffset);
+      if(state.sort==="amount-desc") list.sort((a,b)=>b.amount-a.amount);
+      if(state.sort==="amount-asc") list.sort((a,b)=>a.amount-b.amount);
+      if(state.sort==="name") list.sort((a,b)=>a.name.localeCompare(b.name,"ar"));
+      return list;
+    }
+
+    function renderTable(){
+      const list = filteredClients();
+      body.innerHTML = list.map(c=>{
+        const s = statusOf(c);
+        return `
+          <tr data-id="${c.id}">
+            <td>
+              <div class="client-cell">
+                <div class="avatar">${c.name.replace(/^(شركة|مؤسسة)\s/,"").charAt(0)}</div>
+                <div>
+                  <div class="client-name">${c.name}</div>
+                  <div class="client-type">${c.type} · ${c.phone}</div>
+                </div>
+              </div>
+            </td>
+            <td>📍 ${c.region}</td>
+            <td class="money">${formatMoney(c.amount)}</td>
+            <td>${formatDate(clientDueDate(c))}</td>
+            <td><strong>${remainingText(c.dueOffset)}</strong></td>
+            <td><span class="badge ${s}"><span class="dot"></span>${statusText(s)}</span></td>
+          </tr>
+        `;
+      }).join("");
+      empty.style.display = list.length ? "none" : "block";
+      document.querySelectorAll("tbody tr").forEach(row=>{
+        row.addEventListener("click",()=>openModal(Number(row.dataset.id)));
+      });
+    }
+
+    function renderPriorities(){
+      const urgent = [...clients].sort((a,b)=>a.dueOffset-b.dueOffset).slice(0,5);
+      document.getElementById("priorityList").innerHTML = urgent.map((c,i)=>{
+        const s = statusOf(c);
+        return `
+          <div class="priority-item" data-id="${c.id}">
+            <div class="rank">${i+1}</div>
+            <div><b>${c.name}</b><span>${c.region} · ${formatMoney(c.amount)}</span></div>
+            <div class="countdown ${s} badge">${remainingText(c.dueOffset)}</div>
+          </div>
+        `;
+      }).join("");
+      document.querySelectorAll(".priority-item").forEach(x=>{
+        x.addEventListener("click",()=>openModal(Number(x.dataset.id)));
+      });
+    }
+
+    function drawRegionChart(){
+      const canvas = document.getElementById("regionChart");
+      const ctx = canvas.getContext("2d");
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * dpr;
+      canvas.height = 230 * dpr;
+      ctx.scale(dpr,dpr);
+
+      const counts = {};
+      clients.forEach(c=>counts[c.region]=(counts[c.region]||0)+1);
+      const entries = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,6);
+
+      const css = getComputedStyle(document.body);
+      const text = css.getPropertyValue("--text").trim();
+      const muted = css.getPropertyValue("--muted").trim();
+      const line = css.getPropertyValue("--line").trim();
+      const primary = css.getPropertyValue("--primary").trim();
+      const width = rect.width;
+      const max = Math.max(...entries.map(e=>e[1]));
+      const top = 16, bottom = 34, left = 12, right = 12;
+      const chartH = 230-top-bottom;
+      const gap = 12;
+      const barW = (width-left-right-gap*(entries.length-1))/entries.length;
+
+      ctx.clearRect(0,0,width,230);
+      ctx.strokeStyle = line;
+      ctx.lineWidth = 1;
+      for(let i=0;i<4;i++){
+        const y = top + i*(chartH/3);
+        ctx.beginPath();ctx.moveTo(left,y);ctx.lineTo(width-right,y);ctx.stroke();
+      }
+
+      entries.forEach(([name,val],i)=>{
+        const h = (val/max)*(chartH-25);
+        const x = left+i*(barW+gap);
+        const y = top+chartH-h;
+        const grad = ctx.createLinearGradient(0,y,0,y+h);
+        grad.addColorStop(0,primary);
+        grad.addColorStop(1,"rgba(96,165,250,.45)");
+        ctx.fillStyle=grad;
+        roundRect(ctx,x,y,barW,h,8);
+        ctx.fill();
+
+        ctx.fillStyle=text;
+        ctx.font="bold 12px Tahoma";
+        ctx.textAlign="center";
+        ctx.fillText(val,x+barW/2,y-7);
+
+        ctx.fillStyle=muted;
+        ctx.font="11px Tahoma";
+        ctx.fillText(name,x+barW/2,222);
+      });
+    }
+
+    function roundRect(ctx,x,y,w,h,r){
+      r=Math.min(r,w/2,h/2);
+      ctx.beginPath();
+      ctx.moveTo(x+r,y);
+      ctx.arcTo(x+w,y,x+w,y+h,r);
+      ctx.arcTo(x+w,y+h,x,y+h,r);
+      ctx.arcTo(x,y+h,x,y,r);
+      ctx.arcTo(x,y,x+w,y,r);
+      ctx.closePath();
+    }
+
+    const modal = document.getElementById("clientModal");
+    function openModal(id){
+      const c = clients.find(x=>x.id===id);
+      if(!c) return;
+      document.getElementById("modalAvatar").textContent = c.name.replace(/^(شركة|مؤسسة)\s/,"").charAt(0);
+      document.getElementById("modalName").textContent = c.name;
+      document.getElementById("modalType").textContent = c.type + " · ملف عميل تجريبي";
+      document.getElementById("modalRegion").textContent = c.region;
+      document.getElementById("modalPhone").textContent = c.phone;
+      document.getElementById("modalAmount").textContent = formatMoney(c.amount);
+      document.getElementById("modalDue").textContent = formatDate(clientDueDate(c));
+      document.getElementById("modalRemaining").textContent = remainingText(c.dueOffset);
+      document.getElementById("modalLastContact").textContent = c.lastContact;
+      document.getElementById("modalNote").innerHTML = `<strong style="color:var(--text)">ملاحظات المتابعة:</strong><br>${c.note}`;
+      document.getElementById("callLink").href = `tel:${c.phone}`;
+      document.getElementById("waLink").href = `https://wa.me/966${c.phone.slice(1)}?text=${encodeURIComponent("مرحبًا، نود تذكيركم بموعد التحصيل.")}`;
+      modal.classList.add("show");
+    }
+
+    function closeModal(){modal.classList.remove("show")}
+    document.getElementById("closeModal").onclick=closeModal;
+    modal.addEventListener("click",e=>{if(e.target===modal)closeModal()});
+    document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal()});
+
+    document.getElementById("searchInput").addEventListener("input",e=>{
+      state.search=e.target.value;renderTable();
+    });
+    document.getElementById("regionFilter").addEventListener("change",e=>{
+      state.region=e.target.value;renderTable();
+    });
+    document.getElementById("sortFilter").addEventListener("change",e=>{
+      state.sort=e.target.value;renderTable();
+    });
+    document.querySelectorAll(".tab").forEach(btn=>{
+      btn.addEventListener("click",()=>{
+        document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+        btn.classList.add("active");
+        state.status=btn.dataset.status;
+        renderTable();
+      });
+    });
+
+    function toast(text){
+      const t=document.getElementById("toast");
+      t.textContent=text;t.classList.add("show");
+      clearTimeout(window.toastTimer);
+      window.toastTimer=setTimeout(()=>t.classList.remove("show"),1800);
+    }
+
+    document.getElementById("refreshBtn").addEventListener("click",()=>{
+      renderStats();renderTable();renderPriorities();drawRegionChart();
+      toast("تم تحديث لوحة التحكم");
+    });
+
+    document.getElementById("themeBtn").addEventListener("click",()=>{
+      document.body.classList.toggle("light");
+      const light=document.body.classList.contains("light");
+      document.getElementById("themeBtn").textContent=light?"🌙":"☀️";
+      localStorage.setItem("collection-theme",light?"light":"dark");
+      setTimeout(drawRegionChart,80);
+    });
+
+    if(localStorage.getItem("collection-theme")==="light"){
+      document.body.classList.add("light");
+      document.getElementById("themeBtn").textContent="🌙";
+    }
+
+    window.addEventListener("resize",()=>{clearTimeout(window.chartResize);window.chartResize=setTimeout(drawRegionChart,120)});
+
+    updateClock();
+    setInterval(updateClock,1000);
+    setupRegions();
+    renderStats();
+    renderTable();
+    renderPriorities();
+    setTimeout(drawRegionChart,120);
+    setTimeout(()=>document.getElementById("splash").classList.add("hide"),1600);
+  </script>
+</body>
+</html>
